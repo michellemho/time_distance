@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -11,7 +12,7 @@
         padding: 0;
         margin: 0;
       }
-      
+
       .layer_selector {
                 background: #FFFFFF;
                 border-radius: 4px;
@@ -25,7 +26,7 @@
                 bottom: 25%;
                 text-align: center;
             }
-            
+
             .layer_selector > p {
                 font-weight: bold;
                 color: #666666;
@@ -33,7 +34,7 @@
                 cursor: pointer;
                 border-bottom: 1px solid #999;
             }
-            
+
             .layer_selector ul {
                 padding: 0px 0px 0px 0px;
                 margin: 0;
@@ -73,7 +74,7 @@
             </li>
         </ul>
     </div>
-        
+
     <!-- include cartodb.js library -->
     <script src="http://libs.cartocdn.com/cartodb.js/v3/3.12/cartodb.js"></script>
     <div class="cartodb-overlay overlay-text desktop" style="z-index: 4; max-width: 500px; margin-left: 0px; margin-top: 0px; top: 0px; left: 1%; right: auto; bottom: auto; display: block; background-color: rgba(0, 0, 0, 0);">    <div class="content">    <div class="text widget_text" style="z-index: 4; color: rgb(0, 0, 0); text-align: left; font-size: 25px;"><strong>Travel time between counties:<br>1880 and 1900</strong></div>    </div></div>
@@ -93,7 +94,7 @@
                   $li.addClass('selected');
                   if (selected === 1880) {
                       if (on1880) {
-                          counties.on('featureClick', function(e, pos, pixel, data) { 
+                          counties.on('featureClick', function(e, pos, pixel, data) {
                             var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1880)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
                             counties.setSQL(newSql);
                           });
@@ -105,7 +106,7 @@
                           updateSql = oldSql.replace(/unnest\(times_1900\)/i, "unnest\(times_1880\)");
                           console.log(updateSql);
                           counties.setSQL(updateSql);
-                          counties.on('featureClick', function(e, pos, pixel, data) { 
+                          counties.on('featureClick', function(e, pos, pixel, data) {
                             var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1880)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
                             counties.setSQL(newSql);
                           });
@@ -115,7 +116,7 @@
                       //counties.render()
                   } else if (selected === 1900) {
                       if (on1900) {
-                          counties.on('featureClick', function(e, pos, pixel, data) { 
+                          counties.on('featureClick', function(e, pos, pixel, data) {
                             var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1900)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
                             counties.setSQL(newSql);
                           });
@@ -127,7 +128,7 @@
                           updateSql = oldSql.replace(/unnest\(times_1880\)/i, "unnest\(times_1900\)");
                           console.log(updateSql);
                           counties.setSQL(updateSql);
-                          counties.on('featureClick', function(e, pos, pixel, data) { 
+                          counties.on('featureClick', function(e, pos, pixel, data) {
                             var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1900)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
                             counties.setSQL(newSql);
                           });
@@ -234,15 +235,15 @@
          });
          $('#map').append(legend.render().el);
         cartodb.createLayer(map, 'https://mdweaver107.carto.com/api/v2/viz/a79d1612-f29b-11e4-937f-0e0c41326911/viz.json').addTo(map).on('done', function(layer) {
-          var counties = layer.getSubLayer(0); 
+          var counties = layer.getSubLayer(0);
           counties.setInteractivity('cartodb_id, fips, name, time')
           counties.setInteraction(true);
-          counties.on('featureClick', function(e, pos, pixel, data) { 
+          counties.on('featureClick', function(e, pos, pixel, data) {
             var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1880)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
               counties.setSQL(newSql);
             });
           createSelector(counties);
-          
+
           })
         //map.render();
       }
