@@ -27,10 +27,11 @@
     <div id="container">
       <div id="map"></div>
       <div id="widgets">
-        <div id="avgRandomNumWidget" class="widget widget-formula">
+        <div id="avgOfTimeWidget" class="widget widget-formula">
           <h1>Average time</h1>
           <p><span class="js-average-nums result">xxx</span> minutes</p>
         </div>
+        <div class="widget widget-histogram" id="widgetHistogram"></div>
       </div>
     </div>
     <script>
@@ -75,7 +76,7 @@
       const popup = L.popup({ closeButton: false });
 
       durations_to_areas.on('featureOver', featureEvent => {
-        console.log(`Mouse over shape with time: ${featureEvent.data.time}`);
+        console.log(featureEvent.data.time);
       });
 
       durations_to_areas.on(carto.layer.events.FEATURE_OVER, featureEvent => {
@@ -89,22 +90,21 @@
         });
 
       // Adding a formula widget
-      const averageRandomNum = new carto.dataview.Formula(time_duration_dataset, 'time', {
+      const averageOfTime = new carto.dataview.Formula(time_duration_dataset, 'time', {
         operation: carto.operation.AVG
       });
 
-      averageRandomNum.on('dataChanged', data => {
+      averageOfTime.on('dataChanged', data => {
         refreshAverageNumWidget(data.result);
       });
 
-      function refreshAverageNumWidget(avgRandomNum) {
-        const widgetDom = document.querySelector('#avgRandomNumWidget');
-        const averageRandomNumDom = widgetDom.querySelector('.js-average-nums');
-        averageRandomNumDom.innerText = Math.round(avgRandomNum/60 * 100) / (100) ;
+      function refreshAverageNumWidget(avgOfTime) {
+        const widgetDom = document.querySelector('#avgOfTimeWidget');
+        const averageOfTimeDom = widgetDom.querySelector('.js-average-nums');
+        averageOfTimeDom.innerText = Math.round(avgOfTime/60 * 100) / (100) ;
       }
 
-      client.addDataview(averageRandomNum);
-
+      client.addDataview(averageOfTime);
 
     </script>
   </body>

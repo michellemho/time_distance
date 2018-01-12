@@ -68,79 +68,79 @@
 
     <div id="layers" class="layer_selector">
         <ul>
-            <li data="1880" class="selected">1880
+            <li data="car" class="selected">car
             </li>
-            <li data="1900">1900
+            <li data="bike">bike
             </li>
         </ul>
     </div>
 
-    <!-- include cartodb.js library -->
+    <!-- using old version of cartodb.js library -->
     <script src="http://libs.cartocdn.com/cartodb.js/v3/3.12/cartodb.js"></script>
-    <div class="cartodb-overlay overlay-text desktop" style="z-index: 4; max-width: 500px; margin-left: 0px; margin-top: 0px; top: 0px; left: 1%; right: auto; bottom: auto; display: block; background-color: rgba(0, 0, 0, 0);">    <div class="content">    <div class="text widget_text" style="z-index: 4; color: rgb(0, 0, 0); text-align: left; font-size: 25px;"><strong>Travel time between counties:<br>1880 and 1900</strong></div>    </div></div>
+    <div class="cartodb-overlay overlay-text desktop" style="z-index: 4; max-width: 500px; margin-left: 0px; margin-top: 0px; top: 0px; left: 1%; right: auto; bottom: auto; display: block; background-color: rgba(0, 0, 0, 0);">    <div class="content">    <div class="text widget_text" style="z-index: 4; color: rgb(0, 0, 0); text-align: left; font-size: 25px;"><strong>Travel time between NYC Metro Areas (Biking and Driving)</strong></div>    </div></div>
 
-    <div class="cartodb-overlay overlay-text desktop" style="z-index: 4; max-width: 330px; margin-left: 0px; margin-top: 0px; top: 10%; left: 1%; right: auto; bottom: auto; display: block; background-color: rgba(0, 0, 0, 0);">    <div class="content">    <div class="text widget_text" style="z-index: 4; color: rgb(100, 100, 100); text-align: left; font-size: 12px;">This map presents shortest travel times between counties by land or railroad in 1880 and 1900. <a href="http://www.banxico.org.mx/publicaciones-y-discursos/publicaciones/documentos-de-investigacion/banxico/%7B2F47889C-B853-8304-6300-AC74A75878A4%7D.pdf">Railroad data and method</a> for computing travel times come from <a href="https://sites.google.com/site/fdperezcervantes/">Fernando Pérez-Cervantes</a>. <br><strong>Click on any county to make it the departure point.</strong></div> </div></div>
+    <div class="cartodb-overlay overlay-text desktop" style="z-index: 4; max-width: 330px; margin-left: 0px; margin-top: 0px; top: 10%; left: 1%; right: auto; bottom: auto; display: block; background-color: rgba(0, 0, 0, 0);">    <div class="content">    <div class="text widget_text" style="z-index: 4; color: rgb(100, 100, 100); text-align: left; font-size: 12px;">This map presents travel times between  areas in NYC calculated by <a href="https://github.com/Project-OSRM/osrm-backend">OSRM</a>. <br><strong>Click on any area to make it the origin point.</strong></div> </div></div>
 
     <script>
       function main() {
         function createSelector(counties) {
           var $options = $(".layer_selector").find("li");
-            var on1880 = true
-            var on1900 = false
+            var oncar = true
+            var onbike = false
             $options.click(function(e) {
                   var $li = $(e.target);
                   selected = +$li.attr('data');
                   $options.removeClass('selected');
                   $li.addClass('selected');
-                  if (selected === 1880) {
-                      if (on1880) {
+                  if (selected === 'car') {
+                      if (oncar) {
                           counties.on('featureClick', function(e, pos, pixel, data) {
-                            var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1880)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
+                            var newSql = "SELECT durations_to_areas.* , round(t1.time,2) as time FROM durations_to_areas, (SELECT generate_series(1,2181) as cartodb_id,  unnest(times_car)::numeric as time FROM durations_to_areas WHERE durations_to_areas.name = " + data.name + ") as t1 Where durations_to_areas.cartodb_id = t1.cartodb_id";
                             counties.setSQL(newSql);
                           });
-                          on1880 = true;
-                          on1900 = false;
+                          oncar = true;
+                          onbike = false;
                       } else {
                           oldSql = counties.getSQL();
                           console.log(oldSql);
-                          updateSql = oldSql.replace(/unnest\(times_1900\)/i, "unnest\(times_1880\)");
+                          updateSql = oldSql.replace(/unnest\(times_bike\)/i, "unnest\(times_car\)");
                           console.log(updateSql);
                           counties.setSQL(updateSql);
                           counties.on('featureClick', function(e, pos, pixel, data) {
-                            var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1880)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
+                            var newSql = "SELECT durations_to_areas.* , round(t1.time,2) as time FROM durations_to_areas, (SELECT generate_series(1,2181) as cartodb_id,  unnest(times_car)::numeric as time FROM durations_to_areas WHERE durations_to_areas.name = " + data.name + ") as t1 Where durations_to_areas.cartodb_id = t1.cartodb_id";
                             counties.setSQL(newSql);
                           });
-                          on1880 = true;
-                          on1900 = false;
+                          oncar = true;
+                          onbike = false;
                       }
                       //counties.render()
-                  } else if (selected === 1900) {
-                      if (on1900) {
+                  } else if (selected === 'bike') {
+                      if (onbike) {
                           counties.on('featureClick', function(e, pos, pixel, data) {
-                            var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1900)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
+                            var newSql = "SELECT durations_to_areas.* , round(t1.time,2) as time FROM durations_to_areas, (SELECT generate_series(1,2181) as cartodb_id,  unnest(times_bike)::numeric as time FROM durations_to_areas WHERE durations_to_areas.name = " + data.name + ") as t1 Where durations_to_areas.cartodb_id = t1.cartodb_id";
                             counties.setSQL(newSql);
                           });
-                          on1880 = false;
-                          on1900 = true;
+                          oncar = false;
+                          onbike = true;
                       } else {
                           oldSql = counties.getSQL();
                           console.log(oldSql);
-                          updateSql = oldSql.replace(/unnest\(times_1880\)/i, "unnest\(times_1900\)");
+                          updateSql = oldSql.replace(/unnest\(times_car\)/i, "unnest\(times_bike\)");
                           console.log(updateSql);
                           counties.setSQL(updateSql);
                           counties.on('featureClick', function(e, pos, pixel, data) {
-                            var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1900)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
+                            var newSql = "SELECT durations_to_areas.* , round(t1.time,2) as time FROM durations_to_areas, (SELECT generate_series(1,2181) as cartodb_id,  unnest(times_bike)::numeric as time FROM durations_to_areas WHERE durations_to_areas.name = " + data.name + ") as t1 Where durations_to_areas.cartodb_id = t1.cartodb_id";
                             counties.setSQL(newSql);
                           });
-                          on1880 = false;
-                          on1900 = true;
+                          oncar = false;
+                          onbike = true;
                       }
                       //counties.render()
                   }
                 });
               }
         // Add your code here
-        var map = new L.Map('map', { zoomControl: false, center: [39.833333, -98.583333], zoom: 4 });
+        var map = new L.Map('map', { zoomControl: false, center: [40.704301, -73.936658], zoom: 10 });
         var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png').addTo(map);
         //var attribution = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
         var legend = new cdb.geo.ui.Legend({
@@ -234,12 +234,12 @@
            ]
          });
          $('#map').append(legend.render().el);
-        cartodb.createLayer(map, 'https://mdweaver107.carto.com/api/v2/viz/a79d1612-f29b-11e4-937f-0e0c41326911/viz.json').addTo(map).on('done', function(layer) {
+        cartodb.createLayer(map, 'https://michellemho-carto.carto.com/api/v2/viz/2cf645fb-3955-449c-aecf-693320229a03/viz.json').addTo(map).on('done', function(layer) {
           var counties = layer.getSubLayer(0);
-          counties.setInteractivity('cartodb_id, fips, name, time')
+          counties.setInteractivity('cartodb_id, name, name, time')
           counties.setInteraction(true);
           counties.on('featureClick', function(e, pos, pixel, data) {
-            var newSql = "SELECT times_1880_1900.* , round(t1.time,2) as time FROM times_1880_1900, (SELECT generate_series(1,3109) as row_id,  unnest(times_1880)::numeric as time FROM times_1880_1900 WHERE times_1880_1900.fips = " + data.fips + ") as t1 Where times_1880_1900.row_id = t1.row_id";
+            var newSql = "SELECT durations_to_areas.* , round(t1.time,2) as time FROM durations_to_areas, (SELECT generate_series(1,2181) as cartodb_id,  unnest(times_car)::numeric as time FROM durations_to_areas WHERE durations_to_areas.name = " + data.name + ") as t1 Where durations_to_areas.cartodb_id = t1.cartodb_id";
               counties.setSQL(newSql);
             });
           createSelector(counties);
