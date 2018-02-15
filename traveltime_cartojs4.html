@@ -35,15 +35,15 @@
       </div>
     </div>
     <script>
-      const map = L.map('map').setView([40.704301, -73.936658], 10);
+      const map = L.map('map').setView([40.782901, -73.9658], 12);
       // Adding Voyager Basemap
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png', {
-        maxZoom: 18
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}.png', {
+        minZoom: 0
       }).addTo(map);
 
       // Adding Voyager Labels
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}.png', {
-        maxZoom: 18,
+        minZoom: 0,
         zIndex: 10
       }).addTo(map);
 
@@ -52,21 +52,31 @@
         username: 'michellemho-carto'
       });
 
-      const time_duration_dataset = new carto.source.SQL(`
-        SELECT durations_to_areas.* , round(t1.time,2) as time FROM durations_to_areas, (SELECT generate_series(1,2181) as cartodb_id,  unnest(times_car::numeric[])::numeric as time FROM durations_to_areas WHERE durations_to_areas.name = 34003002100) as t1 Where durations_to_areas.cartodb_id = t1.cartodb_id
+      var time_duration_dataset = new carto.source.SQL(`
+        SELECT durations_to_areas.* , round(t1.time,2) as time
+        FROM durations_to_areas,
+          (SELECT generate_series(1,2181) as cartodb_id,
+                  unnest(times_car::numeric[])::numeric as time
+           FROM durations_to_areas
+           WHERE durations_to_areas.name = 36061014300) as t1
+        WHERE durations_to_areas.cartodb_id = t1.cartodb_id
       `);
       const time_duration_style = new carto.style.CartoCSS(`
-        #layer {
-          polygon-fill: ramp([time], (#008080, #70a494, #b4c8a8, #f6edbd, #edbb8a, #de8a5a, #ca562c), quantiles);
+        #layer{
+          polygon-fill: ramp([time],
+            (#f7feae,#b7e6a5,#7ccba2,#46aea0,#089099,#00718b,#045275), quantiles);
         }
         #layer::outline {
-          line-width: 1;
+          line-width: 0;
           line-color: #FFFFFF;
           line-opacity: 0.5;
         }
+        #layer[name=36061014300]{
+          polygon-fill: #dd1c77;
+        }
       `);
 
-      const durations_to_areas = new carto.layer.Layer(time_duration_dataset, time_duration_style, {featureOverColumns: ['time']});
+      var durations_to_areas = new carto.layer.Layer(time_duration_dataset, time_duration_style, {featureOverColumns: ['time','name']});
 
 
       client.addLayers([durations_to_areas]);
@@ -76,7 +86,7 @@
       const popup = L.popup({ closeButton: false });
 
       durations_to_areas.on('featureOver', featureEvent => {
-        console.log(featureEvent.data.time);
+        // console.log(featureEvent.data.time);
       });
 
       durations_to_areas.on(carto.layer.events.FEATURE_OVER, featureEvent => {
@@ -89,7 +99,40 @@
           popup.removeFrom(map);
         });
 
-      // Adding a formula widget
+      durations_to_areas.on('featureClicked', featureEvent => {
+        map.setView(featureEvent.latLng);
+        console.log('feature clicked!');
+        console.log(featureEvent.data.name)
+        time_duration_dataset.setQuery(`
+          SELECT durations_to_areas.* , round(t1.time,2) as time
+          FROM durations_to_areas,
+            (SELECT generate_series(1,2181) as cartodb_id,
+                    unnest(times_car::numeric[])::numeric as time
+             FROM durations_to_areas
+             WHERE durations_to_areas.name = ${featureEvent.data.name}) as t1
+          WHERE durations_to_areas.cartodb_id = t1.cartodb_id
+          AND time <> 0
+        `);
+        time_duration_style.setContent(`
+            #layer{
+              polygon-fill: ramp([time],
+                (#f7feae,#b7e6a5,#7ccba2,#46aea0,#089099,#00718b,#045275), quantiles);
+            }
+            #layer::outline {
+              line-width: 0;
+              line-color: #FFFFFF;
+              line-opacity: 0.5;
+            }
+            #layer[name=${featureEvent.data.name}]{
+              polygon-fill: #dd1c77;
+            }
+          `)
+
+        });
+
+      ///////////////////////////
+      //Adding a formula widget//
+      ///////////////////////////
       const averageOfTime = new carto.dataview.Formula(time_duration_dataset, 'time', {
         operation: carto.operation.AVG
       });
