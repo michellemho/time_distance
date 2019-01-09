@@ -1,4 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Office Move | CARTO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+ <!-- Include CARTO VL JS -->
+<script src="https://cartodb.github.io/carto-vl/dist/carto-vl.js"></script>
+ <!-- Include Mapbox GL JS -->
+<script src="https://libs.cartocdn.com/mapbox-gl/v0.48.0-carto1/mapbox-gl.js"></script>
+<!-- Include Mapbox GL CSS -->
+<link href="https://libs.cartocdn.com/mapbox-gl/v0.48.0-carto1/mapbox-gl.css" rel="stylesheet" />
+<link href="https://carto.com/developers/carto-vl/examples/maps/style.css" rel="stylesheet">	
+</head>
+<body>
+<div id="map"></div>
+<aside class="toolbox">
+<div class="box">
+<header>
+  <h1>Where to Move</h1>
+</header>
+<section>
 
+  <h2 class="description open-sans" style="font-weight: bold ; font-size: 18px">L Train Shutdown? <br> Time to Move!</h1>
+  <p class="description open-sans" style="font-size: 12px ; text-align: left ; line-height: 14px">
+  This project is about finding the best location for CARTO's new office move. I used <a href="http://www.opentripplanner.org" target="_blank">OpenTripPlanner</a>, an open source multi-modal router, to calculate isochrones in 10 minute increments  up to 90 minutes from each of our home locations on a transit network based on MTA, LIRR, Metro-North, and PATH GTFS data and OpenStreetMap data*. I removed all Manhattan L stops from the network to simulate the L train shutdown scheduled for 2019.
+  </p>
+  <p class="description open-sans" style="font-size: 12px ; text-align: left ; line-height: 14px">
+  Next, I layered the isochrones over a rectangular grid and filtered out the cells where we don't all overlap. I then summed our commute times for the remaining cells and voilà, we have the resulting map!
+  </p>
+  <p class="description open-sans" style="font-size: 12px ; text-align: left ; line-height: 14px">
+  The very <b>BEST LOCATION</b> for our new CARTO office is <b>just south of Fort Greene near Atlantic Terminal!</b> An office there will give us an average commute time of about 40 minutes for a grand total of 720 minutes!
+  </p>
+  <p class="description open-sans" style="font-size: 10px ; text-align: left ; line-height: 14px">
+  * Sorry to my co-workers in Massachusetts and Pennsylvania. I assumed you guys "live" in Penn Station for simplicity's sake :) Amtrak, T, SEPTA, and NJ Transit GTFS can be incorporated soon...
+  </p>
+  <br>
+  <h2 class="description open-sans"></h2>
+       <div id="controls">
+         <ul class="actions">
+           <li>
+             <input type="radio" name="source" onclick="setWithL()" checked>
+             <label style="font-family:Arial">With the L Train</label>
+           </li>
+           <li>
+             <input type="radio" name="source" onclick="setWithOutL()">
+             <label style="font-family:Arial">Without the L Train</label>
+           </li>
+         </ul>
+</section>
+<footer class="js-footer"></footer>
+</div>
+</aside>
+<div id="loader">
+<div class="CDB-LoaderIcon CDB-LoaderIcon--big">
+<svg class="CDB-LoaderIcon-spinner" viewBox="0 0 50 50">
+  <circle class="CDB-LoaderIcon-path" cx="25" cy="25" r="20" fill="none"></circle>
+</svg>
+</div>
+</div>
+<script>
+const map = new mapboxgl.Map({
+container: 'map',
+style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+center: [-73.95, 40.7],
+zoom: 10,
+scrollZoom: true,
+dragRotate: false,
+touchZoomRotate: false,
+});
+
+// Define user
+carto.setDefaultAuth({
+user: 'michellemho-carto',
+apiKey: 'bVXxOpTlQFQKmqkuKBRPTA'
+});
+
+// Define pop-up
+const popup = new mapboxgl.Popup({
+  closeButton: false,
+  closeOnClick: false
+});
+
+const s = carto.expressions;
+
+// Define layer
+const noLsource = new carto.source.SQL('SELECT *, sum_time/60 as total_time, sum_time/60/18 as average_time FROM rect_grid_extended WHERE COUNT = 20');
+
+const withLsource = new carto.source.SQL('SELECT *, sum_time/60 as total_time, sum_time/60/18 as average_time FROM "michellemho-carto".rect_grid WHERE count = 18');
+
+const subwayroutes = new carto.source.Dataset('routes_nyc_subway_jan2017')
+const subwayviz = new carto.Viz(`
+color: ramp(buckets($_group,['JZ','BDFM','S','7','ACE','123','456','NQRW','L','G','SIR']),
+[#996633,#FF6319,#808183,#B933AD,#2850AD,#EE352E,#00933C,#FCCC0A,#A7A9AC,#6CBE45,#053159,#FFFFFF])
+width: 3
+`)
+
+const subwaylayer = new carto.Layer('subway_layer', subwayroutes, subwayviz);
+
+
+const vizString = `@total_time: $total_time
+color: opacity(ramp(linear($total_time, globalMin($total_time), globalMax($total_time)), reverse(CB_RDYLGN)),1-(($total_time-globalMin($total_time))/(globalMax($total_time)-globalMin($total_time))))
+strokeWidth: 0.5
+strokeColor: opacity(ramp(linear($total_time, globalMin($total_time), globalMax($total_time)), reverse(CB_RDYLGN)),1-(($total_time-globalMin($total_time))/(globalMax($total_time)-globalMin($total_time))))`
+
+const viz = new carto.Viz(vizString);
+
+const gridlayer = new carto.Layer('gridlayer', withLsource, viz);
+
+gridlayer.addTo(map, 'watername_ocean');
+
+
+subwaylayer.addTo(map,'watername_ocean')
+subwaylayer.on('loaded', hideLoader);
+
+
+function hideLoader() {
+document.getElementById('loader').style.opacity = '0';
+}
+
+// Define interactivity
+ const interactivity = new carto.Interactivity(gridlayer);
+ const delay = 50;
+
+ function updatePopup(event) {
+  if (event.features.length > 0) {
+    const vars = event.features[0].variables;
+    popup.setHTML(`
+    <div>
+      <span style='font-weight: bold'> Total Commute Time: </span> ${vars.total_time.value}
+    </div>
+    `);
+    popup.setLngLat([event.coordinates.lng, event.coordinates.lat]);
+    if (!popup.isOpen()) {
+      popup.addTo(map);
+    }
+  } else {
+    popup.remove();
+  }
+}
+
+function setPopupsHover() {
+   interactivity.off('featureClick', updatePopup);
+   interactivity.on('featureHover', updatePopup);
+ }
+
+ setPopupsHover()
+
+ function setWithL() {
+  gridlayer.update(withLsource, viz);
+}
+function setWithOutL() {
+  gridlayer.update(noLsource, viz);
+}
+
+</script>
+</body>
+</html>
 <!DOCTYPE html>
 <html>
   <head>
