@@ -3,7 +3,7 @@ A project called "Where Should We Move?" that identifies best location based on 
 
 ![image](https://user-images.githubusercontent.com/12551177/50937356-38ce8880-1441-11e9-839d-ed945d6ec748.png)
 
-Steps to manually get this running... it's not pretty:
+Steps to manually get this running... it's not pretty🙈:
 
 1. Get OpenTripPlanner routing machine (http://www.opentripplanner.org/) running on an OSM extract and GTSF feeds for NYC locally at localhost:8080
 2. Collect "home" locations (places to minimize distance/time to/from) and place in CARTO table (this process currently relies on having a CARTO account)
