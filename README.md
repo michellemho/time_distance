@@ -1,9 +1,11 @@
 # time_distance
 A project called "Where Should We Move?" that identifies best location based on minimizing commute to multiple locations
 
+![image](https://user-images.githubusercontent.com/12551177/50937356-38ce8880-1441-11e9-839d-ed945d6ec748.png)
+
 Steps to manually get this running... it's not pretty:
 
-1. Get OpenTripPlanner routing machine (http://www.opentripplanner.org/) running on an OSM extract and GTSF feeds for NYC locally (at localhost:8080)
+1. Get OpenTripPlanner routing machine (http://www.opentripplanner.org/) running on an OSM extract and GTSF feeds for NYC locally at localhost:8080
 2. Collect "home" locations (places to minimize distance/time to/from) and place in CARTO table (this process currently relies on having a CARTO account)
 3. Run the new_work_location notebook. This notebook does many things:
     - Generates isochrone queries for two situations (with and without L train stops) from "home" locations CARTO table
@@ -14,5 +16,3 @@ Steps to manually get this running... it's not pretty:
     - Count the number of overlaps in each grid cell and sum the minimum times in each grid cell
     - Create two new tables of rectangle grids (with and without L train) in CARTO with the above information.
 4. Create the map visualization with CARTO VL (code in index.html) and put in a bl.ock [Voila!](http://bl.ocks.org/michellemho/raw/7bda353d62975d8dc24f600db25ac550/)
-
-Oh boy
