@@ -13,6 +13,6 @@ Steps to manually get this running... it's not pretty:
     - Make rectangle grid table (taking advantage of CARTO PostGIS function CDB_RectangleGrid) over the extent of the isochrones
     - Count the number of overlaps in each grid cell and sum the minimum times in each grid cell
     - Create two new tables of rectangle grids (with and without L train) in CARTO with the above information.
-4. Create the map visualization with CARTO VL (code in index.html)
+4. Create the map visualization with CARTO VL (code in index.html) and put in a bl.ock [Voila!](http://bl.ocks.org/michellemho/raw/7bda353d62975d8dc24f600db25ac550/)
 
-Oh boy.
+Oh boy
